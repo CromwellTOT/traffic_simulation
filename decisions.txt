@@ -1,0 +1,7 @@
+- How soon can a car accelerate to 100km/s from 0 speed? 10 seconds - https://en.wikipedia.org/wiki/0_to_60_mph
+- should car always use the max accelerate / decelerate speed? maybe involve randomness here / IDM / https://imaginary.org/sites/default/files/trafficsimulation_documentation.pdf
+- road has no alleviation
+- audio support? no
+- discrete model vs time continuous model? https://en.wikipedia.org/wiki/Microscopic_traffic_flow_model - am choosing discrete model
+    - frames per second? render rate: 30fqs
+    - How frequently run a simulation? every frame? every frame for now (if calculation became bottleneck, we can adjust)

@@ -1,3 +1,6 @@
+const MAX_SPEED = 27; // m/s  - 97.2 km/h
+const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
+
 module.exports = class Car {
     // distance to start of the road
     constructor(distance, speed) {
@@ -5,9 +8,15 @@ module.exports = class Car {
         this.speed = speed ?? 0; // m/s
         this.accelerate = 0; // m/s^2
     }
+    // get the most up to date speed and distance
+    calculate(lastTime, nextTime) {
+        const timeInterval = nextTime - lastTime;
+        this.speed += this.accelerate * timeInterval;
 
-    simulate() {
-        this.speed += this.accelerate / 30;
-        this.distance += this.speed / 30;
+        if (this.speed > MAX_SPEED) {
+            this.speed = MAX_SPEED;
+        }
+
+        this.distance += this.speed * timeInterval;
     }
 };
