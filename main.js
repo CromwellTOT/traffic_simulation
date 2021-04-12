@@ -1,25 +1,31 @@
-const Road = require('./Road');
+// dev: watchify main.js -o bundle.js -v
+const Road = require('./app/Road');
 //const config = require('./config');
+const framePerSecond = 5;
+const interval = 1000 / framePerSecond;
+const timerElem = document.getElementById("timer");
 
 const road = new Road();
 
-let timer = 0;
+let timer = 0; // second
 
-// calculate every frame? yes
-while (true) {
-    // generate car every 10 seconds
-    if (timer % 10 === 0) {
-        road.generateCar(0);
+road.generateCar();
+road.generateCar(100,10);
+road.generateCar(50, 1);
+road.generateCar(200, 0);
+
+function simulate() {
+    timer += interval / 1000;
+    //console.log(`${timer} s`);
+    timerElem.innerText = timer.toFixed(2) + ' s';
+
+    road.render();
+    road.calculate(interval / 1000);
+
+    if (timer >= 100 || !road.hasCars()) {
+        console.log('stopped');
+        clearInterval(INTERVAL);
     }
-    // get 1 decimal precision
-    const nextTimer = Math.round((timer + 0.1) * 10) / 10;
-
-    road.render(timer);
-    road.calculate(timer, nextTimer);
-    // or user press stop button
-    if (timer === 30) {
-        break;
-    }
-
-    timer = nextTimer;
 }
+
+const INTERVAL = setInterval(simulate, interval);

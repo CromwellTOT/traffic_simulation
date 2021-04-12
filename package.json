@@ -2,11 +2,14 @@
   "name": "traffic_simulation",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app/canvas.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "browserify": "^17.0.0"
+  }
 }

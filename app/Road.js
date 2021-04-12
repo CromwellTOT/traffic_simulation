@@ -1,23 +1,29 @@
-// one lane, one entry
+const canvas = require('./canvas');
 const Car = require('./Car');
-const MAX_SPEED = 27; // m/s  - 97.2 km/h
-const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
+
 const ROAD_LENGTH = 3000; // meters
 
 module.exports = class Road {
     cars = []; // queue
 
-    generateCar() {
-        const newCar = new Car(0, 0);
-        this.cars.push(newCar);
+    constructor() {
+
     }
+
+    generateCar(distance = 0, speed = 0) {
+        const newCar = new Car(distance, speed);
+        this.cars.push(newCar);
+        this.cars.sort((c1, c2) => c1.distance - c2.distance);
+    }
+
     /**
+     * render road
      * render every car on the screen
      * remove car if out of scope
      */
-    render(time) {
-        console.log();
-        console.log('time', `${time}s`);
+    render() {
+        canvas.clear();
+        canvas.drawRoad(ROAD_LENGTH);
 
         for (const [i, car] of this.cars.entries()) {
             // reach the exit, remove this car
@@ -25,7 +31,7 @@ module.exports = class Road {
                 this.cars.splice(i, 1);
             }
 
-            console.log(`car #${i}`, `${car.distance}m`);
+            canvas.drawCar(car);
         }
     }
 
@@ -36,33 +42,24 @@ module.exports = class Road {
      *  distance
      * for all cars
      */
-    calculate(lastTime, nextTime) {
+    calculate(timeInterval) {
         for (const [i, car] of this.cars.entries()) {
-            // decide accelerate rate
-            const carInFront = this.cars[i - 1];
+            const carInFront = this.cars[i + 1];
 
             if (!carInFront) {
-                // no car in front
-                if (car.speed < MAX_SPEED) {
-                    car.accelerate = MAX_ACCELERATE_SPEED;
-                } else {
-                    // reach the maximum speed
-                    car.accelerate = 0;
-                }
+                car.accelerate();
             } else {
                 // have car in front
                 const dis = carInFront.distance - car.distance;
 
                 if (dis < 25) {
-                    car.accelerate = -MAX_ACCELERATE_SPEED;
-                } else if (dis > 50) {
-                    car.accelerate = MAX_ACCELERATE_SPEED;
+                    car.decelerate();
                 } else {
-                    car.accelerate = 0;
+                    car.accelerate();
                 }
             }
 
-            car.calculate(lastTime, nextTime);
+            car.calculate(timeInterval);
         }
     }
 
