@@ -27,7 +27,7 @@ function simulate() {
     road.render();
     road.calculate(interval / 1000);
 
-    if (timer >= 10 || !road.hasCars()) {
+    if (timer >= 100 || !road.hasCars()) {
         stop();
     }
 }
