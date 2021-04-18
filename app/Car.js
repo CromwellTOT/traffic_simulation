@@ -1,5 +1,6 @@
 const MAX_SPEED = 27; // m/s  - 97.2 km/h
 const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
+const MAX_DECELERATE_SPEED = -10; //  meters per s^2
 
 module.exports = class Car {
     // distance to start of the road
@@ -28,7 +29,7 @@ module.exports = class Car {
         this.accRate = MAX_ACCELERATE_SPEED;
     }
 
-    decelerate() {
+    brake(distance) {
         if (this.speed <= 0) {
             this.accRate = 0;
             return;

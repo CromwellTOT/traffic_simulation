@@ -7,7 +7,7 @@ module.exports = class Road {
     cars = []; // queue
 
     constructor() {
-        //canvas.drawRoad(ROAD_LENGTH);
+
     }
 
     generateCar(distance = 0, speed = 0) {
@@ -53,7 +53,7 @@ module.exports = class Road {
                 const dis = carInFront.distance - car.distance;
 
                 if (dis < 25) {
-                    car.decelerate();
+                    car.brake();
                 } else {
                     car.accelerate();
                 }

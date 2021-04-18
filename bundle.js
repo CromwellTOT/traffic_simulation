@@ -1,6 +1,7 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const MAX_SPEED = 27; // m/s  - 97.2 km/h
 const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
+const MAX_DECELERATE_SPEED = -10; //  meters per s^2
 
 module.exports = class Car {
     // distance to start of the road
@@ -29,7 +30,7 @@ module.exports = class Car {
         this.accRate = MAX_ACCELERATE_SPEED;
     }
 
-    decelerate() {
+    brake(distance) {
         if (this.speed <= 0) {
             this.accRate = 0;
             return;
@@ -48,7 +49,7 @@ module.exports = class Road {
     cars = []; // queue
 
     constructor() {
-        //canvas.drawRoad(ROAD_LENGTH);
+
     }
 
     generateCar(distance = 0, speed = 0) {
@@ -94,7 +95,7 @@ module.exports = class Road {
                 const dis = carInFront.distance - car.distance;
 
                 if (dis < 25) {
-                    car.decelerate();
+                    car.brake();
                 } else {
                     car.accelerate();
                 }

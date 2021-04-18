@@ -12,3 +12,7 @@ Install npm
 > npm install -g watchify
 > watchify main.js -o bundle.js -v
 ```
+
+ScreenShot
+---
+![alt text](https://github.com/CromwellTOT/traffic_simulation/blob/master/screenshots/image1.jpg?raw=true)
