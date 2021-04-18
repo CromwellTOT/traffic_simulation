@@ -15,4 +15,4 @@ Install npm
 
 ScreenShot
 ---
-![alt text](https://github.com/CromwellTOT/traffic_simulation/blob/master/screenshots/image1.jpg?raw=true)
+![screenshot1](./screenshots/image1.png "running on the highway")
