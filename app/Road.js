@@ -1,13 +1,13 @@
 const canvas = require('./canvas');
 const Car = require('./Car');
 
-const ROAD_LENGTH = 3000; // meters
+const ROAD_LENGTH = 1500; // meters
 
 module.exports = class Road {
     cars = []; // queue
 
     constructor() {
-
+        //canvas.drawRoad(ROAD_LENGTH);
     }
 
     generateCar(distance = 0, speed = 0) {

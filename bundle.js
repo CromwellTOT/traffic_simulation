@@ -42,13 +42,13 @@ module.exports = class Car {
 const canvas = require('./canvas');
 const Car = require('./Car');
 
-const ROAD_LENGTH = 3000; // meters
+const ROAD_LENGTH = 1500; // meters
 
 module.exports = class Road {
     cars = []; // queue
 
     constructor() {
-
+        //canvas.drawRoad(ROAD_LENGTH);
     }
 
     generateCar(distance = 0, speed = 0) {
@@ -109,121 +109,149 @@ module.exports = class Road {
     }
 };
 },{"./Car":1,"./canvas":3}],3:[function(require,module,exports){
-let maxLength;
-let width;
-let height;
-let roadHeight = 200;
+// divide the whole road into many segments, so that they fit in one screen, and don't need to scroll
+const segmentLength = 1500; // px
+const canvasWidth = segmentLength;
+const firstSegmentHeight = 40; // px
+const segmentHeight = 100; // px
+let segmentNo;
+let canvasHeight;
 
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 
 module.exports = {
-    drawRoad: (length) => {
-        maxLength = length * 10;
+    // passed in length is the road total length in meters
+    drawRoad: (RoadTotallength) => {
+        const maxLength = RoadTotallength * 10;
+        segmentNo = Math.ceil(maxLength / segmentLength);
+        // real canvas width and height are larger than consts
+        canvas.width = canvasWidth + 50;
+        canvas.height = canvasHeight = segmentNo * segmentHeight + 100;
 
         ctx.fillStyle = "black";
-        const interval = 1500;
-
-        let counter = Math.ceil(maxLength / interval);
-
-        width = canvas.width = maxLength;
-        height = canvas.height = 500;
-
-        ctx.fillRect(0, roadHeight, maxLength, 1);
-        ctx.fillRect(0, roadHeight + 29, maxLength, 1);
-
         ctx.font = "20px Arial";
-        for (let i = 0; i < counter; i++) {
-            ctx.fillText(`${i * interval / 10} m`, i * interval, 200);
+
+        for (let s = 0; s < segmentNo; s++) {
+            const thisSegmentStartRoadHeight = firstSegmentHeight + s * segmentHeight;
+            // draw road
+            ctx.fillRect(0, thisSegmentStartRoadHeight, segmentLength, 1);
+            ctx.fillRect(0, thisSegmentStartRoadHeight + 29, segmentLength, 1);
+            // draw length text
+            ctx.fillText(`${(s + 1) * segmentLength / 10}m`, segmentLength - 50, firstSegmentHeight + s * segmentHeight);
         }
     },
 
+    /**
+     * @input
+     * car.distance: meters
+     * car.speed: meters per second
+     * car.accRate: meters ^ 2 per second
+     */
     drawCar: (car) => {
-        //console.log(car);
-        // draw the car
         ctx.fillStyle = car.color ?? 'red';
-        ctx.fillRect(car.distance * 10 - 15, roadHeight + 5, 30, 20);
+        // draw the car
+        const segmentNo = Math.floor(car.distance * 10 / segmentLength);
+        const distance = car.distance * 10 % segmentLength;
+
+        ctx.fillRect(distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 5, 30, 20);
         // car info
         ctx.fillStyle = car.color ?? 'black';
         ctx.font = "20px Times New Roman";
-        ctx.fillText(`${car.distance.toFixed(1)} m`, car.distance * 10 - 15, roadHeight + 40);
-        ctx.fillText(`${car.speed.toFixed(1)} m/s`, car.distance * 10 - 15, roadHeight + 60);
-        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, car.distance * 10 - 15, roadHeight + 80);
+
+        ctx.fillText(`${car.distance.toFixed(1)} m`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 40);
+        ctx.fillText(`${car.speed.toFixed(1)} m/s`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 60);
+        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 80);
     },
 
     clear: () => {
-        ctx.clearRect(0, 0, maxLength, 500);
+        ctx.clearRect(0, 0, canvasWidth + 50, canvasHeight + 100);
     }
 };
 },{}],4:[function(require,module,exports){
-// dev: watchify main.js -o bundle.js -v
 const Road = require('./app/Road');
 //const config = require('./config');
-const framePerSecond = 5;
+const framePerSecond = 10;
 const interval = 1000 / framePerSecond;
+const ROAD_LENGTH = 1500; // meters
+const MAX_SPEED = 27; // m/s  - 97.2 km/h
 
 const timerElem = document.getElementById("timer");
 
-let INTERVAL;
-let timer; // second
+let INTERVAL; // singleton
+let timer = 0; // second
 
 const road = new Road();
 
-
-
-// put 4 cars on the board
-road.generateCar();
-road.generateCar(100,10);
-road.generateCar(50, 1);
-road.generateCar(200, 0);
+function generateDefaultCars() {
+    road.generateCar();
+    road.generateCar(100, 10);
+    road.generateCar(50, 1);
+    road.generateCar(200, 0);
+}
 
 function simulate() {
     timer += interval / 1000;
-    //console.log(`${timer} s`);
     timerElem.innerText = timer.toFixed(2) + ' s';
 
     road.render();
     road.calculate(interval / 1000);
-
-    if (timer >= 100 || !road.hasCars()) {
-        stop();
-    }
 }
-
-restart();
 // controllers
 function restart() {
-    stop();
+    // clear everything
+    road.cars = [];
+    pause();
     timer = 0;
+
+    // start again
+    generateDefaultCars();
     start();
 }
 
-function stop() {
-    console.log('stopped');
-    clearInterval(INTERVAL);
-}
+function pause() {
+    console.log('paused');
 
-function start() {
-    // to prevent race
     if (INTERVAL) {
         clearInterval(INTERVAL);
     }
+}
+
+function start() {
     INTERVAL = setInterval(simulate, interval);
 }
-// even listeners from console panel
-document.getElementById('stopresume').addEventListener('click', (event) => {
+// event listeners from console panel
+document.getElementById('pauseresume').addEventListener('click', (event) => {
     const thisButton = event.target;
 
     if (thisButton.innerHTML === 'resume') {
         start();
-        thisButton.innerHTML = "stop";
-    } else if (thisButton.innerHTML === 'stop') {
-        stop();
+        thisButton.innerHTML = "pause";
+    } else if (thisButton.innerHTML === 'pause') {
+        pause();
         thisButton.innerHTML = "resume";
     }
 });
+document.getElementById('addCar').addEventListener('click', (event) => {
+    const distance = Number(document.getElementById('distance').value);
+    const speed = Number(document.getElementById('speed').value);
+    const addCarAlertElem = document.getElementById('addCarAlert');
+
+    if (distance < 0 || speed < 0 || typeof distance !== 'number' || typeof speed !== 'number' || distance > ROAD_LENGTH || speed > MAX_SPEED) {
+        console.log(distance, speed);
+        addCarAlertElem.style.display = 'block';
+        return;
+    }
+
+    addCarAlertElem.style.display = 'none';
+    road.generateCar(distance, speed);
+});
 document.getElementById('restart').addEventListener('click', () => {
     restart();
-    document.getElementById('stopresume').innerHTML = 'stop';
+    document.getElementById('pauseresume').innerHTML = 'pause';
 });
+
+// begin simulation by default
+generateDefaultCars();
+start();
 },{"./app/Road":2}]},{},[4]);
