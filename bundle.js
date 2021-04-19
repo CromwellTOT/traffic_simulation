@@ -1,10 +1,14 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-const MAX_SPEED = 27; // m/s  - 97.2 km/h
-const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
-const distanceToHitBrake = 45;
-const distanceToHitBrakeHardest = 5;
-const MAX_DECELERATE_SPEED = -10; //  meters per s^2
-const crashDistance = 1.5;
+const {
+    MAX_SPEED,
+    MAX_ACCELERATE_SPEED,
+    MAX_DECELERATE_SPEED,
+    DISTANCE_START_TO_HIT_BRAKE,
+    DISTANCE_TO_HIT_BRAKE_HARDEST,
+    CAR_LENGTH,
+} = require('./config');
+
+const crashDistance = CAR_LENGTH / 2; // meter
 
 module.exports = class Car {
     constructor(distance, speed) {
@@ -39,14 +43,16 @@ module.exports = class Car {
             return;
         }
         /**
-         *  distanceToHitBrake * a + b = 0
-         *  distanceToHitBrakeHardest * a + b = MAX_DECELERATE_SPEED
+         *  accRate = a * distance + b
+         *  ->
+         *  DISTANCE_START_TO_HIT_BRAKE * a + b = 0
+         *  DISTANCE_TO_HIT_BRAKE_HARDEST * a + b = MAX_DECELERATE_SPEED
          *  ->
          *  a = ..
          *  b = ..
          */
-        this.accRate = distance * MAX_DECELERATE_SPEED / (distanceToHitBrakeHardest - distanceToHitBrake)
-                        + distanceToHitBrake * MAX_DECELERATE_SPEED / (distanceToHitBrake - distanceToHitBrakeHardest);
+        this.accRate = distance * MAX_DECELERATE_SPEED / (DISTANCE_TO_HIT_BRAKE_HARDEST - DISTANCE_START_TO_HIT_BRAKE)
+                        + DISTANCE_START_TO_HIT_BRAKE * MAX_DECELERATE_SPEED / (DISTANCE_START_TO_HIT_BRAKE - DISTANCE_TO_HIT_BRAKE_HARDEST);
     }
     /**
      *  return true when crashed, and reset all states of these 2 cars
@@ -79,12 +85,13 @@ module.exports = class Car {
         return carA.speed - carB.speed;
     }
 };
-},{}],2:[function(require,module,exports){
+},{"./config":4}],2:[function(require,module,exports){
 const canvas = require('./canvas');
 const Car = require('./Car');
-
-const ROAD_LENGTH = 1500; // meters
-const distanceToHitBrake = 45;
+const {
+    ROAD_LENGTH,
+    DISTANCE_START_TO_HIT_BRAKE
+} = require('./config');
 
 module.exports = class Road {
     cars = []; // queue
@@ -156,7 +163,7 @@ module.exports = class Road {
                 else {
                     const disBetween = carInFront.distance - car.distance;
 
-                    if (disBetween <= distanceToHitBrake) {
+                    if (disBetween <= DISTANCE_START_TO_HIT_BRAKE) {
                         car.brake(disBetween);
                     } else {
                         car.accelerate();
@@ -172,18 +179,18 @@ module.exports = class Road {
         return this.cars.length;
     }
 };
-},{"./Car":1,"./canvas":3}],3:[function(require,module,exports){
-// divide the whole road into many segments, so that they fit in one screen, and don't need to scroll
-const segmentLength = 1500; // px
-const canvasWidth = segmentLength;
-const firstSegmentHeight = 40; // px
-const segmentHeight = 100; // px
-
-let segmentNo;
-let canvasHeight;
+},{"./Car":1,"./canvas":3,"./config":4}],3:[function(require,module,exports){
+const {
+    SEGMENT_LENGTH,
+    SEGMENT_HEIGHT,
+    FIRST_SEGMENT_HEIGHT
+} = require('./config');
 
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
+
+const canvasWidth = SEGMENT_LENGTH;
+let canvasHeight;
 
 module.exports = {
     /**
@@ -191,29 +198,30 @@ module.exports = {
      */
     drawRoad: (RoadTotallength) => {
         const maxLength = RoadTotallength * 10;
-        segmentNo = Math.ceil(maxLength / segmentLength);
-        // real canvas width and height are larger than consts
+        const segmentNo = Math.ceil(maxLength / SEGMENT_LENGTH);
+        // real canvas space is larger than just the road
         canvas.width = canvasWidth + 50;
-        canvas.height = canvasHeight = segmentNo * segmentHeight + 100;
+        canvas.height = canvasHeight = segmentNo * SEGMENT_HEIGHT + 100;
 
         ctx.fillStyle = "black";
-        ctx.font = "20px Arial";
+        ctx.font = "20px Times New Roman";
 
         for (let s = 0; s < segmentNo; s++) {
-            const thisSegmentStartRoadHeight = firstSegmentHeight + s * segmentHeight;
+            const thisSegmentStartRoadHeight = s * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT;
             // draw road
-            ctx.fillRect(0, thisSegmentStartRoadHeight, segmentLength, 1);
-            ctx.fillRect(0, thisSegmentStartRoadHeight + 29, segmentLength, 1);
+            ctx.fillRect(0, thisSegmentStartRoadHeight, SEGMENT_LENGTH, 1);
+            ctx.fillRect(0, thisSegmentStartRoadHeight + 29, SEGMENT_LENGTH, 1);
             // draw length text
-            ctx.fillText(`${(s + 1) * segmentLength / 10}m`, segmentLength - 50, firstSegmentHeight + s * segmentHeight);
+            ctx.fillText(`${(s + 1) * SEGMENT_LENGTH / 10}m`, SEGMENT_LENGTH - 50, s * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT);
         }
 
         // drawCrash
         for (const crashDistance of window.crashes) {
             ctx.fillStyle = "red";
-            const segmentNo = Math.floor(crashDistance * 10 / segmentLength);
+            const segmentNo = Math.floor(crashDistance * 10 / SEGMENT_LENGTH);
+            const distance = (crashDistance * 10) % SEGMENT_LENGTH;
 
-            ctx.fillText('CRASH!', crashDistance, segmentNo * segmentHeight + firstSegmentHeight);
+            ctx.fillText('CRASH!', distance, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT);
         }
     },
 
@@ -226,31 +234,50 @@ module.exports = {
     drawCar: (car) => {
         ctx.fillStyle = car.color ?? 'black';
         // draw the car
-        const segmentNo = Math.floor(car.distance * 10 / segmentLength);
-        const distance = car.distance * 10 % segmentLength;
+        const segmentNo = Math.floor(car.distance * 10 / SEGMENT_LENGTH);
+        const distance = (car.distance * 10) % SEGMENT_LENGTH;
 
-        ctx.fillRect(distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 5, 30, 20);
+        ctx.fillRect(distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 5, 30, 20);
         // car info
         ctx.fillStyle = car.color ?? 'black';
         ctx.font = "20px Times New Roman";
 
-        ctx.fillText(`${car.distance.toFixed(1)} m`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 40);
-        ctx.fillText(`${car.speed.toFixed(1)} m/s`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 60);
-        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 80);
+        ctx.fillText(`${car.distance.toFixed(1)} m`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 40);
+        ctx.fillText(`${car.speed.toFixed(1)} m/s`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 60);
+        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 80);
     },
 
     clear: () => {
         ctx.clearRect(0, 0, canvasWidth + 50, canvasHeight + 100);
     }
 };
-},{}],4:[function(require,module,exports){
+},{"./config":4}],4:[function(require,module,exports){
+// make it a js file, so that I can add comments
+// always change constants in one place
+module.exports = {
+  FRAME_PER_SECOND: 10,
+  ROAD_LENGTH: 1500, // m
+  MAX_SPEED: 27, // m/s  - 97.2 km/h
+  MAX_ACCELERATE_SPEED: 2.7, // m/s^2
+  MAX_DECELERATE_SPEED: -10, // m/s^2
+  DISTANCE_TO_HIT_BRAKE_HARDEST: 5, // m
+  DISTANCE_START_TO_HIT_BRAKE: 45, // m
+  CAR_LENGTH: 3, // m
+  CAR_WIDTH: 2, // m
+  // A road is broken into many segments, so that they can fit into one screen, and no need to scroll
+  SEGMENT_LENGTH: 1500, // px
+  SEGMENT_HEIGHT: 100,
+  FIRST_SEGMENT_HEIGHT: 40,
+};
+},{}],5:[function(require,module,exports){
 const Road = require('./app/Road');
-//const config = require('./config');
-const framePerSecond = 10;
-const interval = 1000 / framePerSecond;
-const ROAD_LENGTH = 1500; // meters
-const MAX_SPEED = 27; // m/s  - 97.2 km/h
+const {
+    ROAD_LENGTH,
+    FRAME_PER_SECOND,
+    MAX_SPEED,
+} = require('./app/config');
 
+const interval = 1000 / FRAME_PER_SECOND;
 const timerElem = document.getElementById("timer");
 
 let INTERVAL; // singleton
@@ -340,4 +367,4 @@ document.getElementById('restart').addEventListener('click', () => {
 // begin simulation by default
 generateDefaultCars();
 start();
-},{"./app/Road":2}]},{},[4]);
+},{"./app/Road":2,"./app/config":4}]},{},[5]);

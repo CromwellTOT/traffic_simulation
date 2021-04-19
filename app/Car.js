@@ -1,9 +1,13 @@
-const MAX_SPEED = 27; // m/s  - 97.2 km/h
-const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
-const distanceToHitBrake = 45;
-const distanceToHitBrakeHardest = 5;
-const MAX_DECELERATE_SPEED = -10; //  meters per s^2
-const crashDistance = 1.5;
+const {
+    MAX_SPEED,
+    MAX_ACCELERATE_SPEED,
+    MAX_DECELERATE_SPEED,
+    DISTANCE_START_TO_HIT_BRAKE,
+    DISTANCE_TO_HIT_BRAKE_HARDEST,
+    CAR_LENGTH,
+} = require('./config');
+
+const crashDistance = CAR_LENGTH / 2; // meter
 
 module.exports = class Car {
     constructor(distance, speed) {
@@ -38,14 +42,16 @@ module.exports = class Car {
             return;
         }
         /**
-         *  distanceToHitBrake * a + b = 0
-         *  distanceToHitBrakeHardest * a + b = MAX_DECELERATE_SPEED
+         *  accRate = a * distance + b
+         *  ->
+         *  DISTANCE_START_TO_HIT_BRAKE * a + b = 0
+         *  DISTANCE_TO_HIT_BRAKE_HARDEST * a + b = MAX_DECELERATE_SPEED
          *  ->
          *  a = ..
          *  b = ..
          */
-        this.accRate = distance * MAX_DECELERATE_SPEED / (distanceToHitBrakeHardest - distanceToHitBrake)
-                        + distanceToHitBrake * MAX_DECELERATE_SPEED / (distanceToHitBrake - distanceToHitBrakeHardest);
+        this.accRate = distance * MAX_DECELERATE_SPEED / (DISTANCE_TO_HIT_BRAKE_HARDEST - DISTANCE_START_TO_HIT_BRAKE)
+                        + DISTANCE_START_TO_HIT_BRAKE * MAX_DECELERATE_SPEED / (DISTANCE_START_TO_HIT_BRAKE - DISTANCE_TO_HIT_BRAKE_HARDEST);
     }
     /**
      *  return true when crashed, and reset all states of these 2 cars

@@ -1,14 +1,14 @@
-// divide the whole road into many segments, so that they fit in one screen, and don't need to scroll
-const segmentLength = 1500; // px
-const canvasWidth = segmentLength;
-const firstSegmentHeight = 40; // px
-const segmentHeight = 100; // px
-
-let segmentNo;
-let canvasHeight;
+const {
+    SEGMENT_LENGTH,
+    SEGMENT_HEIGHT,
+    FIRST_SEGMENT_HEIGHT
+} = require('./config');
 
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
+
+const canvasWidth = SEGMENT_LENGTH;
+let canvasHeight;
 
 module.exports = {
     /**
@@ -16,29 +16,30 @@ module.exports = {
      */
     drawRoad: (RoadTotallength) => {
         const maxLength = RoadTotallength * 10;
-        segmentNo = Math.ceil(maxLength / segmentLength);
-        // real canvas width and height are larger than consts
+        const segmentNo = Math.ceil(maxLength / SEGMENT_LENGTH);
+        // real canvas space is larger than just the road
         canvas.width = canvasWidth + 50;
-        canvas.height = canvasHeight = segmentNo * segmentHeight + 100;
+        canvas.height = canvasHeight = segmentNo * SEGMENT_HEIGHT + 100;
 
         ctx.fillStyle = "black";
-        ctx.font = "20px Arial";
+        ctx.font = "20px Times New Roman";
 
         for (let s = 0; s < segmentNo; s++) {
-            const thisSegmentStartRoadHeight = firstSegmentHeight + s * segmentHeight;
+            const thisSegmentStartRoadHeight = s * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT;
             // draw road
-            ctx.fillRect(0, thisSegmentStartRoadHeight, segmentLength, 1);
-            ctx.fillRect(0, thisSegmentStartRoadHeight + 29, segmentLength, 1);
+            ctx.fillRect(0, thisSegmentStartRoadHeight, SEGMENT_LENGTH, 1);
+            ctx.fillRect(0, thisSegmentStartRoadHeight + 29, SEGMENT_LENGTH, 1);
             // draw length text
-            ctx.fillText(`${(s + 1) * segmentLength / 10}m`, segmentLength - 50, firstSegmentHeight + s * segmentHeight);
+            ctx.fillText(`${(s + 1) * SEGMENT_LENGTH / 10}m`, SEGMENT_LENGTH - 50, s * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT);
         }
 
         // drawCrash
         for (const crashDistance of window.crashes) {
             ctx.fillStyle = "red";
-            const segmentNo = Math.floor(crashDistance * 10 / segmentLength);
+            const segmentNo = Math.floor(crashDistance * 10 / SEGMENT_LENGTH);
+            const distance = (crashDistance * 10) % SEGMENT_LENGTH;
 
-            ctx.fillText('CRASH!', crashDistance, segmentNo * segmentHeight + firstSegmentHeight);
+            ctx.fillText('CRASH!', distance, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT);
         }
     },
 
@@ -51,17 +52,17 @@ module.exports = {
     drawCar: (car) => {
         ctx.fillStyle = car.color ?? 'black';
         // draw the car
-        const segmentNo = Math.floor(car.distance * 10 / segmentLength);
-        const distance = car.distance * 10 % segmentLength;
+        const segmentNo = Math.floor(car.distance * 10 / SEGMENT_LENGTH);
+        const distance = (car.distance * 10) % SEGMENT_LENGTH;
 
-        ctx.fillRect(distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 5, 30, 20);
+        ctx.fillRect(distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 5, 30, 20);
         // car info
         ctx.fillStyle = car.color ?? 'black';
         ctx.font = "20px Times New Roman";
 
-        ctx.fillText(`${car.distance.toFixed(1)} m`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 40);
-        ctx.fillText(`${car.speed.toFixed(1)} m/s`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 60);
-        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, distance - 15, segmentNo * segmentHeight + firstSegmentHeight + 80);
+        ctx.fillText(`${car.distance.toFixed(1)} m`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 40);
+        ctx.fillText(`${car.speed.toFixed(1)} m/s`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 60);
+        ctx.fillText(`${car.accRate.toFixed(1)} m/s2`, distance - 15, segmentNo * SEGMENT_HEIGHT + FIRST_SEGMENT_HEIGHT + 80);
     },
 
     clear: () => {

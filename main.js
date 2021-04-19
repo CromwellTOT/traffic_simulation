@@ -1,10 +1,11 @@
 const Road = require('./app/Road');
-//const config = require('./config');
-const framePerSecond = 10;
-const interval = 1000 / framePerSecond;
-const ROAD_LENGTH = 1500; // meters
-const MAX_SPEED = 27; // m/s  - 97.2 km/h
+const {
+    ROAD_LENGTH,
+    FRAME_PER_SECOND,
+    MAX_SPEED,
+} = require('./app/config');
 
+const interval = 1000 / FRAME_PER_SECOND;
 const timerElem = document.getElementById("timer");
 
 let INTERVAL; // singleton

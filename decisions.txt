@@ -23,9 +23,12 @@
     - maybe involve randomness here
     - Intelligent Driver Model: https://imaginary.org/sites/default/files/trafficsimulation_documentation.pdf
     - use my own theory
+        - check the speed of the car directly in front first
+        - and then check distance between
         - accelerate: always use the max
         - decelerate: check distance
-            - start to brake when there is less than 50 meters
-            - brake the hardest when there is less than 25 meters
+            - start to brake when there is less than xx meters
+            - brake the hardest when there is less than yy meters
 
 - what about a crash?
+    - crash 2 cars and remove them from the road immediately (but with a trace!)

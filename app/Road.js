@@ -1,8 +1,9 @@
 const canvas = require('./canvas');
 const Car = require('./Car');
-
-const ROAD_LENGTH = 1500; // meters
-const distanceToHitBrake = 45;
+const {
+    ROAD_LENGTH,
+    DISTANCE_START_TO_HIT_BRAKE
+} = require('./config');
 
 module.exports = class Road {
     cars = []; // queue
@@ -74,7 +75,7 @@ module.exports = class Road {
                 else {
                     const disBetween = carInFront.distance - car.distance;
 
-                    if (disBetween <= distanceToHitBrake) {
+                    if (disBetween <= DISTANCE_START_TO_HIT_BRAKE) {
                         car.brake(disBetween);
                     } else {
                         car.accelerate();
