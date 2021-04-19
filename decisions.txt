@@ -1,4 +1,5 @@
 - Road has no alleviation
+- Driver / car is able to maintain the same speed <- this is weird, tho...
 
 - Audio support? no
 

@@ -53,6 +53,10 @@ module.exports = class Car {
         this.accRate = distance * MAX_DECELERATE_SPEED / (DISTANCE_TO_HIT_BRAKE_HARDEST - DISTANCE_START_TO_HIT_BRAKE)
                         + DISTANCE_START_TO_HIT_BRAKE * MAX_DECELERATE_SPEED / (DISTANCE_START_TO_HIT_BRAKE - DISTANCE_TO_HIT_BRAKE_HARDEST);
     }
+    // I know this sounds weird, but I don't want to involve too many complexities...
+    maintainSpeed() {
+        this.accRate = 0;
+    }
     /**
      *  return true when crashed, and reset all states of these 2 cars
      *  return false when no crash

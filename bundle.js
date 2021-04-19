@@ -54,6 +54,10 @@ module.exports = class Car {
         this.accRate = distance * MAX_DECELERATE_SPEED / (DISTANCE_TO_HIT_BRAKE_HARDEST - DISTANCE_START_TO_HIT_BRAKE)
                         + DISTANCE_START_TO_HIT_BRAKE * MAX_DECELERATE_SPEED / (DISTANCE_START_TO_HIT_BRAKE - DISTANCE_TO_HIT_BRAKE_HARDEST);
     }
+    // I know this sounds weird, but I don't want to involve too many complexities...
+    maintainSpeed() {
+        this.accRate = 0;
+    }
     /**
      *  return true when crashed, and reset all states of these 2 cars
      *  return false when no crash
@@ -94,11 +98,7 @@ const {
 } = require('./config');
 
 module.exports = class Road {
-    cars = []; // queue
-
-    constructor() {
-
-    }
+    cars = []; // queue, cars are sorted by distance
 
     generateCar(distance = 0, speed = 0) {
         const newCar = new Car(distance, speed);
@@ -156,11 +156,11 @@ module.exports = class Road {
                 }
                 // @todo: driver's decision should be refactored to Car class
                 // if the car in front is faster
-                if (Car.compareSpeed(carInFront, car)) {
+                if (Car.compareSpeed(carInFront, car) > 0) {
                     car.accelerate();
                 }
                 // if the car in front is slower
-                else {
+                else if (Car.compareSpeed(carInFront, car) < 0) {
                     const disBetween = carInFront.distance - car.distance;
 
                     if (disBetween <= DISTANCE_START_TO_HIT_BRAKE) {
@@ -168,6 +168,10 @@ module.exports = class Road {
                     } else {
                         car.accelerate();
                     }
+                }
+                // two cars are same speed
+                else {
+                    car.maintainSpeed();
                 }
             }
 
