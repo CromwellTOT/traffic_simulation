@@ -6,13 +6,14 @@ Just drag `index.html` into your browser!
 
 Local dev
 ---
-Install npm
+cd into the project directory
 ```
-> brew install node
+> brew install node ( in case you don't have npm)
 > npm install -g watchify
-> watchify main.js -o bundle.js -v
+> watchify main.js -o bundle.js -v (in order to automatically update bundle.js)
 ```
 
 ScreenShot
 ---
-![screenshot1](./screenshots/image1.png "running on the highway")
+![screenshot1](./screenshots/image1.png "cars on the highway")
+![screenshot2](./screenshots/image2.png "crash!")
