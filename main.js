@@ -20,15 +20,18 @@ function generateDefaultCars() {
 }
 
 function simulate() {
+    // 1, update timer
     timer += interval / 1000;
     timerElem.innerText = timer.toFixed(2) + ' s';
-
+    // 2, render all elements at this moment
     road.render();
+    // 3, calculate the state at the next moment
     road.calculate(interval / 1000);
 }
 // controllers
 function restart() {
     // clear everything
+    window.crashes = [];
     road.cars = [];
     pause();
     timer = 0;
@@ -67,12 +70,20 @@ document.getElementById('addCar').addEventListener('click', (event) => {
     const addCarAlertElem = document.getElementById('addCarAlert');
 
     if (distance < 0 || speed < 0 || typeof distance !== 'number' || typeof speed !== 'number' || distance > ROAD_LENGTH || speed > MAX_SPEED) {
-        console.log(distance, speed);
+        console.log('invalid input', distance, speed);
+        addCarAlertElem.innerText = 'invalid input';
+        addCarAlertElem.style.display = 'block';
+        return;
+    }
+    // don't allow enter the road below 17 m/s if not entering from the beginning
+    if (distance !== 0 && speed < 17) {
+        addCarAlertElem.innerText = 'too slow';
         addCarAlertElem.style.display = 'block';
         return;
     }
 
     addCarAlertElem.style.display = 'none';
+
     road.generateCar(distance, speed);
 });
 document.getElementById('restart').addEventListener('click', () => {

@@ -9,14 +9,14 @@
             top: 0;
             right: 0;
             width: 80px;
-            border: 3px solid #73AD21;
+            border: 1px solid #73AD21;
         }
         #console {
             position: fixed;
             top: 100px;
             right:0;
             width: 200px;
-            border: 3px solid #73AD21;
+            border: 1px solid #73AD21;
         }
         #addCarPanel {
             position: fixed;
@@ -24,7 +24,7 @@
             right:0;
             width: 200px;
             height: 200px;
-            border: 3px solid #73AD21;
+            border: 1px solid #73AD21;
         }
         #addCarAlert {
             width: 100px;
@@ -47,9 +47,12 @@
     <input id="distance" placeholder="distance (m)" type="text">
     <input id="speed" placeholder="speed (m/s)" type="text">
     <button id="addCar">add car</button>
-    <div id="addCarAlert">invalid input</div>
+    <div id="addCarAlert"></div>
 </div>
 <!-- js script all in one file using browserify -->
+<script>
+    window.crashes = [];
+</script>
 <script src="bundle.js"></script>
 </body>
 </html>

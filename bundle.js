@@ -1,14 +1,17 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 const MAX_SPEED = 27; // m/s  - 97.2 km/h
 const MAX_ACCELERATE_SPEED = 2.7; //  meters per s^2
+const distanceToHitBrake = 45;
+const distanceToHitBrakeHardest = 5;
 const MAX_DECELERATE_SPEED = -10; //  meters per s^2
+const crashDistance = 1.5;
 
 module.exports = class Car {
-    // distance to start of the road
     constructor(distance, speed) {
         this.distance = distance; // m
         this.speed = speed ?? 0; // m/s
         this.accRate = 0; // m/s^2
+        this.state = 'running';
     }
     // get the most up to date speed and distance
     // ms
@@ -35,8 +38,45 @@ module.exports = class Car {
             this.accRate = 0;
             return;
         }
+        /**
+         *  distanceToHitBrake * a + b = 0
+         *  distanceToHitBrakeHardest * a + b = MAX_DECELERATE_SPEED
+         *  ->
+         *  a = ..
+         *  b = ..
+         */
+        this.accRate = distance * MAX_DECELERATE_SPEED / (distanceToHitBrakeHardest - distanceToHitBrake)
+                        + distanceToHitBrake * MAX_DECELERATE_SPEED / (distanceToHitBrake - distanceToHitBrakeHardest);
+    }
+    /**
+     *  return true when crashed, and reset all states of these 2 cars
+     *  return false when no crash
+     */
+    static detectCrash(carA, carB) {
+        const disBetween = Math.abs(carA.distance - carB.distance);
 
-        this.accRate = -MAX_ACCELERATE_SPEED;
+        if (disBetween > crashDistance) {
+            return false;
+        }
+
+        carA.accRate = 0;
+        carA.speed = 0;
+        carA.state = 'crash';
+        carB.accRate = 0;
+        carB.speed = 0;
+        carB.state = 'crash';
+
+        window.crashes.push(Math.min(carA.distance, carB.distance));
+
+        return true;
+    }
+
+    /**
+     * return true when carA is faster
+     * return false when carA is slower
+     */
+    static compareSpeed(carA, carB) {
+        return carA.speed - carB.speed;
     }
 };
 },{}],2:[function(require,module,exports){
@@ -44,6 +84,7 @@ const canvas = require('./canvas');
 const Car = require('./Car');
 
 const ROAD_LENGTH = 1500; // meters
+const distanceToHitBrake = 45;
 
 module.exports = class Road {
     cars = []; // queue
@@ -59,15 +100,20 @@ module.exports = class Road {
     }
 
     /**
-     * render road
-     * render every car on the screen
-     * remove car if out of scope
+     * 1, clear canvas
+     * 2, render road
+     * 3, render every car on the screen
+     * 4, remove car if needed
      */
     render() {
         canvas.clear();
         canvas.drawRoad(ROAD_LENGTH);
 
         for (const [i, car] of this.cars.entries()) {
+            // if crash, remove this car
+            if (car.state === 'crash') {
+                this.cars.splice(i, 1);
+            }
             // reach the exit, remove this car
             if (car.distance >= ROAD_LENGTH) {
                 this.cars.splice(i, 1);
@@ -78,26 +124,43 @@ module.exports = class Road {
     }
 
     /**
-     * get most up to date
-     *  accelerate speed
-     *  speed
-     *  distance
-     * for all cars
+     * 1, detect crash
+     * 2, driver decides to hit acclerator or brake
+     *    (depending on the distance between the car directly infront of him / her)
+     * 3, update each car's state
      */
     calculate(timeInterval) {
         for (const [i, car] of this.cars.entries()) {
+            if (car.state === 'crash') {
+                // will be removed during render
+                continue;
+            }
+
             const carInFront = this.cars[i + 1];
 
             if (!carInFront) {
                 car.accelerate();
-            } else {
-                // have car in front
-                const dis = carInFront.distance - car.distance;
-
-                if (dis < 25) {
-                    car.brake();
-                } else {
+            }
+            // have car in front
+            else {
+                if (Car.detectCrash(car, carInFront)) {
+                    // if crash, then no need to calculate
+                    continue;
+                }
+                // @todo: driver's decision should be refactored to Car class
+                // if the car in front is faster
+                if (Car.compareSpeed(carInFront, car)) {
                     car.accelerate();
+                }
+                // if the car in front is slower
+                else {
+                    const disBetween = carInFront.distance - car.distance;
+
+                    if (disBetween <= distanceToHitBrake) {
+                        car.brake(disBetween);
+                    } else {
+                        car.accelerate();
+                    }
                 }
             }
 
@@ -115,6 +178,7 @@ const segmentLength = 1500; // px
 const canvasWidth = segmentLength;
 const firstSegmentHeight = 40; // px
 const segmentHeight = 100; // px
+
 let segmentNo;
 let canvasHeight;
 
@@ -122,7 +186,9 @@ const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 
 module.exports = {
-    // passed in length is the road total length in meters
+    /**
+     * @input meters
+     */
     drawRoad: (RoadTotallength) => {
         const maxLength = RoadTotallength * 10;
         segmentNo = Math.ceil(maxLength / segmentLength);
@@ -141,16 +207,24 @@ module.exports = {
             // draw length text
             ctx.fillText(`${(s + 1) * segmentLength / 10}m`, segmentLength - 50, firstSegmentHeight + s * segmentHeight);
         }
+
+        // drawCrash
+        for (const crashDistance of window.crashes) {
+            ctx.fillStyle = "red";
+            const segmentNo = Math.floor(crashDistance * 10 / segmentLength);
+
+            ctx.fillText('CRASH!', crashDistance, segmentNo * segmentHeight + firstSegmentHeight);
+        }
     },
 
     /**
      * @input
-     * car.distance: meters
-     * car.speed: meters per second
-     * car.accRate: meters ^ 2 per second
+     *   car.distance: meters
+     *   car.speed: meters per second
+     *   car.accRate: meters ^ 2 per second
      */
     drawCar: (car) => {
-        ctx.fillStyle = car.color ?? 'red';
+        ctx.fillStyle = car.color ?? 'black';
         // draw the car
         const segmentNo = Math.floor(car.distance * 10 / segmentLength);
         const distance = car.distance * 10 % segmentLength;
@@ -192,15 +266,18 @@ function generateDefaultCars() {
 }
 
 function simulate() {
+    // 1, update timer
     timer += interval / 1000;
     timerElem.innerText = timer.toFixed(2) + ' s';
-
+    // 2, render all elements at this moment
     road.render();
+    // 3, calculate the state at the next moment
     road.calculate(interval / 1000);
 }
 // controllers
 function restart() {
     // clear everything
+    window.crashes = [];
     road.cars = [];
     pause();
     timer = 0;
@@ -239,12 +316,20 @@ document.getElementById('addCar').addEventListener('click', (event) => {
     const addCarAlertElem = document.getElementById('addCarAlert');
 
     if (distance < 0 || speed < 0 || typeof distance !== 'number' || typeof speed !== 'number' || distance > ROAD_LENGTH || speed > MAX_SPEED) {
-        console.log(distance, speed);
+        console.log('invalid input', distance, speed);
+        addCarAlertElem.innerText = 'invalid input';
+        addCarAlertElem.style.display = 'block';
+        return;
+    }
+    // don't allow enter the road below 17 m/s if not entering from the beginning
+    if (distance !== 0 && speed < 17) {
+        addCarAlertElem.innerText = 'too slow';
         addCarAlertElem.style.display = 'block';
         return;
     }
 
     addCarAlertElem.style.display = 'none';
+
     road.generateCar(distance, speed);
 });
 document.getElementById('restart').addEventListener('click', () => {

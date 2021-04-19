@@ -14,7 +14,9 @@
     - 10 seconds - https://en.wikipedia.org/wiki/0_to_60_mph
 
 - How fast can a car brake
-    - braking distance: https://www.amsi.org.au/teacher_modules/pdfs/Maths_delivers/Braking5.pdf
+    - braking distance
+        - usually 35m
+        - https://www.amsi.org.au/teacher_modules/pdfs/Maths_delivers/Braking5.pdf
     - -10 m/s^2
 
 - Should car always use the max accelerate / decelerate speed?

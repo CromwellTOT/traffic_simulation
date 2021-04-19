@@ -3,6 +3,7 @@ const segmentLength = 1500; // px
 const canvasWidth = segmentLength;
 const firstSegmentHeight = 40; // px
 const segmentHeight = 100; // px
+
 let segmentNo;
 let canvasHeight;
 
@@ -10,7 +11,9 @@ const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 
 module.exports = {
-    // passed in length is the road total length in meters
+    /**
+     * @input meters
+     */
     drawRoad: (RoadTotallength) => {
         const maxLength = RoadTotallength * 10;
         segmentNo = Math.ceil(maxLength / segmentLength);
@@ -29,16 +32,24 @@ module.exports = {
             // draw length text
             ctx.fillText(`${(s + 1) * segmentLength / 10}m`, segmentLength - 50, firstSegmentHeight + s * segmentHeight);
         }
+
+        // drawCrash
+        for (const crashDistance of window.crashes) {
+            ctx.fillStyle = "red";
+            const segmentNo = Math.floor(crashDistance * 10 / segmentLength);
+
+            ctx.fillText('CRASH!', crashDistance, segmentNo * segmentHeight + firstSegmentHeight);
+        }
     },
 
     /**
      * @input
-     * car.distance: meters
-     * car.speed: meters per second
-     * car.accRate: meters ^ 2 per second
+     *   car.distance: meters
+     *   car.speed: meters per second
+     *   car.accRate: meters ^ 2 per second
      */
     drawCar: (car) => {
-        ctx.fillStyle = car.color ?? 'red';
+        ctx.fillStyle = car.color ?? 'black';
         // draw the car
         const segmentNo = Math.floor(car.distance * 10 / segmentLength);
         const distance = car.distance * 10 % segmentLength;
